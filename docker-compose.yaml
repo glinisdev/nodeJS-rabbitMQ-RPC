@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.10-rc-management-alpine
+    container_name: rabbitmq
+    env_file: ./.env
+    ports:
+      - $RABBIT_LOCAL_PORT:$RABBIT_DOCKER_PORT
+      - $RABBIT_UI_LOCAL_PORT:$RABBIT_UI_DOCKER_PORT
+
+  m1:
+    build:
+      context: m1
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $M1_LOCAL_PORT:$M1_DOCKER_PORT
+    working_dir: /m1
+    environment:
+      WAIT_HOSTS: rabbitmq:$RABBIT_LOCAL_PORT
+      M1_LOCAL_PORT: $M1_LOCAL_PORT
+      RABBIT_LOCAL_PORT: $RABBIT_LOCAL_PORT
+      RABBIT_CONNECTION_LINK: $RABBIT_CONNECTION_LINK
+      QUEUE_NAME: $QUEUE_NAME
+    stdin_open: true
+    tty: true
+
+  m2:
+    build:
+      context: m2
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $M2_LOCAL_PORT:$M2_DOCKER_PORT
+    working_dir: /m2
+    environment:
+      WAIT_HOSTS: rabbitmq:$RABBIT_LOCAL_PORT
+      RABBIT_CONNECTION_LINK: $RABBIT_CONNECTION_LINK
+      QUEUE_NAME: $QUEUE_NAME
+    stdin_open: true
+    tty: true
+
+# docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.9-management
+
+# curl --location 'localhost:3000/request' \
+# --header 'Content-Type: application/json' \
+# --data '{
+#     "message": "Hello there"
+# }'
